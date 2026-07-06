@@ -1,0 +1,25 @@
+name: 学习通销假提交
+
+on:
+  schedule:
+    # 周日 12:00 UTC = 北京时间 20:00
+    - cron: '0 12 * * 0'
+  workflow_dispatch:
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 安装依赖
+        run: pip install pycryptodome
+      - name: 执行销假提交
+        env:
+          CHAOXING_COOKIES: ${{ secrets.CHAOXING_COOKIES }}
+          CANCEL_LAT: ${{ secrets.CANCEL_LAT }}
+          CANCEL_LNG: ${{ secrets.CANCEL_LNG }}
+          CANCEL_ADDRESS: ${{ secrets.CANCEL_ADDRESS }}
+        run: bash cancel/submit.sh

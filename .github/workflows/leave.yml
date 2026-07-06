@@ -1,0 +1,23 @@
+name: 学习通请假提交
+
+on:
+  schedule:
+    # 周四 1:00 UTC = 北京时间 9:00
+    - cron: '7 1 * * 4'
+  workflow_dispatch:
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 安装依赖
+        run: pip install pycryptodome
+      - name: 执行请假提交
+        env:
+          CHAOXING_COOKIES: ${{ secrets.CHAOXING_COOKIES }}
+          LEAVE_PHOTO_URL: ${{ secrets.LEAVE_PHOTO_URL }}
+        run: bash leave/submit.sh

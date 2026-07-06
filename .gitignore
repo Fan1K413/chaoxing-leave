@@ -1,0 +1,10 @@
+cookies
+*.har
+*.log
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+cancel/location.json
+leave/archive/
