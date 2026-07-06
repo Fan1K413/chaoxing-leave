@@ -2,7 +2,6 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 LOG_FILE="$SCRIPT_DIR/submit.log"
 
 # Find working Python (Windows Store python3 is broken in Git Bash)
@@ -34,7 +33,7 @@ CX_UID="${CX_UID:-}"
 UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36"
 ACCEPT_JSON="Accept: application/json, text/plain, */*"
 
-# 定位信息优先级：环境变量 > cancel/location.json > cancel/office.chaoxing.com.har-1.har
+# 定位信息通过环境变量提供。
 # GitHub Actions 建议用 Secrets/Variables 设置这三个值。
 CANCEL_LAT="${CANCEL_LAT:-}"
 CANCEL_LNG="${CANCEL_LNG:-}"
@@ -46,7 +45,7 @@ CANCEL_ADDRESS="${CANCEL_ADDRESS:-}"
 if [ -n "$CHAOXING_COOKIES" ]; then
     COOKIES="$CHAOXING_COOKIES"
 else
-    COOKIES=$(cat "$ROOT_DIR/cookies")
+    COOKIES=$(cat "$SCRIPT_DIR/cookies")
 fi
 
 UUID=$($PYTHON -c "import uuid; print(uuid.uuid4().hex)")

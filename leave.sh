@@ -38,7 +38,7 @@ ACCEPT_JSON="Accept: application/json, text/plain, */*"
 if [ -n "$CHAOXING_COOKIES" ]; then
     COOKIES="$CHAOXING_COOKIES"
 else
-    COOKIES=$(cat "$SCRIPT_DIR/../cookies")
+    COOKIES=$(cat "$SCRIPT_DIR/cookies")
 fi
 
 UUID=$($PYTHON -c "import uuid; print(uuid.uuid4().hex)")

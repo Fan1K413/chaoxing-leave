@@ -20,4 +20,4 @@ jobs:
         env:
           CHAOXING_COOKIES: ${{ secrets.CHAOXING_COOKIES }}
           LEAVE_PHOTO_URL: ${{ secrets.LEAVE_PHOTO_URL }}
-        run: bash leave/submit.sh
+        run: bash leave.sh

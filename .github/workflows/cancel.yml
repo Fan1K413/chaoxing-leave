@@ -22,4 +22,4 @@ jobs:
           CANCEL_LAT: ${{ secrets.CANCEL_LAT }}
           CANCEL_LNG: ${{ secrets.CANCEL_LNG }}
           CANCEL_ADDRESS: ${{ secrets.CANCEL_ADDRESS }}
-        run: bash cancel/submit.sh
+        run: bash cancel.sh

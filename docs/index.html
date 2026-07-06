@@ -4,10 +4,348 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>学习通 OA 自动化</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #667085;
+      --primary: #2563eb;
+      --primary-soft: #eaf1ff;
+      --border: #e5e7eb;
+      --code: #101828;
+      --shadow: 0 18px 45px rgba(15, 23, 42, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, .14), transparent 32rem),
+        linear-gradient(180deg, #ffffff 0%, var(--bg) 34rem);
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container {
+      width: min(1080px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    header {
+      padding: 72px 0 48px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border: 1px solid rgba(37, 99, 235, .18);
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: #1d4ed8;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    h1 {
+      margin: 18px 0 14px;
+      font-size: clamp(36px, 6vw, 64px);
+      line-height: 1.08;
+      letter-spacing: -.04em;
+    }
+
+    .lead {
+      max-width: 760px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      background: #fff;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, .06);
+    }
+
+    .button.primary {
+      color: #fff;
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    section {
+      margin: 28px 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, .88);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .card h2, .card h3 {
+      margin-top: 0;
+      line-height: 1.25;
+    }
+
+    .card h2 { font-size: 26px; }
+    .card h3 { font-size: 20px; }
+
+    .muted { color: var(--muted); }
+
+    .list {
+      padding-left: 20px;
+      margin-bottom: 0;
+    }
+
+    .secret-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .secret-table th, .secret-table td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .secret-table th {
+      background: #f8fafc;
+      font-size: 14px;
+      color: #344054;
+    }
+
+    .secret-table tr:last-child td { border-bottom: 0; }
+
+    code {
+      padding: 2px 6px;
+      border-radius: 7px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .92em;
+    }
+
+    pre {
+      overflow: auto;
+      padding: 16px;
+      border-radius: 14px;
+      background: var(--code);
+      color: #e5e7eb;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    pre code {
+      padding: 0;
+      background: transparent;
+      color: inherit;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      margin-top: 8px;
+      border-radius: 999px;
+      background: var(--primary);
+      box-shadow: 0 0 0 5px var(--primary-soft);
+      flex: none;
+    }
+
+    .warning {
+      border-color: #fed7aa;
+      background: #fff7ed;
+    }
+
+    footer {
+      padding: 36px 0 54px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 14px;
+    }
+
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: 1fr; }
+      header { padding-top: 46px; }
+      .container { width: min(100% - 28px, 1080px); }
+    }
+  </style>
 </head>
 <body>
-  <h1>学习通 OA 自动化</h1>
-  <p>公开仓库版本不包含任何个人信息、Cookie、定位、抓包内容或表单预填数据。</p>
-  <p>请通过 GitHub Actions Secrets 配置运行所需的私密参数。</p>
+  <header>
+    <div class="container">
+      <span class="badge">GitHub Actions · 学习通 OA 自动化</span>
+      <h1>自动提交请假与销假申请</h1>
+      <p class="lead">
+        一个公开仓库友好的自动化模板：脚本不保存 Cookie、定位、照片或个人预填信息，所有敏感参数都通过 Secrets / 环境变量注入。
+      </p>
+      <div class="actions">
+        <a class="button primary" href="fake.html">模拟请假页面</a>
+        <a class="button" href="../README.md">查看 README</a>
+        <a class="button" href="https://github.com/Fan1K413/chaoxing-leave">GitHub 仓库</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="grid">
+      <article class="card">
+        <h2>请假自动化</h2>
+        <p class="muted">每周四北京时间 09:07 自动运行。</p>
+        <ul class="list">
+          <li>请假时间：周五 12:00 至周日 18:00</li>
+          <li>申请日期：运行当周周四</li>
+          <li>面部拍照：通过 <code>LEAVE_PHOTO_URL</code> 注入</li>
+          <li>脚本：<code>leave.sh</code></li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>销假自动化</h2>
+        <p class="muted">每周日北京时间 20:00 自动运行。</p>
+        <ul class="list">
+          <li>销假时间：运行时北京时间</li>
+          <li>定位：通过 <code>CANCEL_LAT</code> / <code>CANCEL_LNG</code> / <code>CANCEL_ADDRESS</code> 注入</li>
+          <li>脚本：<code>cancel.sh</code></li>
+          <li>也支持在 Actions 页面手动触发</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="card">
+      <h2>需要配置的 Secrets</h2>
+      <p class="muted">进入 GitHub 仓库：Settings → Secrets and variables → Actions → New repository secret。</p>
+      <table class="secret-table">
+        <thead>
+          <tr>
+            <th>Secret</th>
+            <th>用途</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>CHAOXING_COOKIES</code></td>
+            <td>学习通 / 超星 OA 登录 Cookie。</td>
+          </tr>
+          <tr>
+            <td><code>LEAVE_PHOTO_URL</code></td>
+            <td>请假面部拍照图片链接。不要把照片文件提交到公开仓库。</td>
+          </tr>
+          <tr>
+            <td><code>CANCEL_LAT</code></td>
+            <td>销假定位纬度。</td>
+          </tr>
+          <tr>
+            <td><code>CANCEL_LNG</code></td>
+            <td>销假定位经度。</td>
+          </tr>
+          <tr>
+            <td><code>CANCEL_ADDRESS</code></td>
+            <td>销假定位地址。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>本地运行：请假</h2>
+        <pre><code>CHAOXING_COOKIES='你的 Cookie' \
+LEAVE_PHOTO_URL='https://example.com/photo.jpg' \
+bash leave.sh</code></pre>
+      </article>
+
+      <article class="card">
+        <h2>本地运行：销假</h2>
+        <pre><code>CHAOXING_COOKIES='你的 Cookie' \
+CANCEL_LAT='纬度' \
+CANCEL_LNG='经度' \
+CANCEL_ADDRESS='地址' \
+bash cancel.sh</code></pre>
+      </article>
+    </section>
+
+    <section class="card">
+      <h2>执行流程</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <span class="dot"></span>
+          <div>
+            <strong>读取 Secrets</strong>
+            <div class="muted">从 GitHub Actions Secrets 或本地环境变量读取 Cookie、照片链接和定位。</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <span class="dot"></span>
+          <div>
+            <strong>获取表单结构</strong>
+            <div class="muted">实时请求 OA 表单结构、审批人和用户信息，避免维护固定模板。</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <span class="dot"></span>
+          <div>
+            <strong>构建并提交</strong>
+            <div class="muted">按网页端格式构造表单数据后提交到 OA 保存接口。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">公开模板仅保留自动化逻辑；敏感参数请始终放在 Secrets 中。</div>
+  </footer>
 </body>
 </html>
