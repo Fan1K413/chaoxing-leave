@@ -9401,9 +9401,9 @@ mjx-container[jax="SVG"] path[data-c], mjx-container[jax="SVG"] use[data-c] { st
         <!-- 编辑模式：文件列表 + 上传按钮 -->
         <div id="facePhotoEdit">
           <ul data-v-f15ee4e8="" class="form_upload_file" id="faceFileList">
-            <li data-v-f15ee4e8="" class="upload_file_per" id="faceFileItem">
+            <li data-v-f15ee4e8="" class="upload_file_per" id="faceFileItem" style="display:none;">
               <div data-v-f15ee4e8="" class="upload_file_type" onclick="viewFacePhoto()"><img data-v-f15ee4e8="" class="upload_file_icon" src="https://office-static.chaoxing.com/oa/static/style/apps/forms/mobile/fore/images/icons/jpg.png"></div>
-              <div data-v-f15ee4e8="" class="upload_file_data" onclick="viewFacePhoto()"><div data-v-f15ee4e8="" class="upload_file_info"><h6 data-v-f15ee4e8="" class="upload_file_name owt2" tabindex="0" role="option" id="faceFileName">head.jpg</h6><p data-v-f15ee4e8="" class="upload_file_size owt1" tabindex="0" role="option" id="faceFileSize">--</p></div></div>
+              <div data-v-f15ee4e8="" class="upload_file_data" onclick="viewFacePhoto()"><div data-v-f15ee4e8="" class="upload_file_info"><h6 data-v-f15ee4e8="" class="upload_file_name owt2" tabindex="0" role="option" id="faceFileName"></h6><p data-v-f15ee4e8="" class="upload_file_size owt1" tabindex="0" role="option" id="faceFileSize">--</p></div></div>
               <a data-v-f15ee4e8="" class="upload_file_download" onclick="event.stopPropagation();removeFacePhoto();" style="cursor:pointer;" title="删除"></a>
             </li>
           </ul>
@@ -9415,7 +9415,7 @@ mjx-container[jax="SVG"] path[data-c], mjx-container[jax="SVG"] use[data-c] { st
           </div>
         </div>
         <!-- 详情模式（提交后显示） -->
-        <div data-v-f15ee4e8="" class="form_img_forbid" id="facePhotoDetail" style="display:none;"><ul data-v-f15ee4e8="" class="form_upload_file"><li data-v-f15ee4e8="" class="upload_file_per" onclick="viewFacePhoto()"><div data-v-f15ee4e8="" class="upload_file_type"><img data-v-f15ee4e8="" class="upload_file_icon" id="facePhotoDetailIcon" src="https://office-static.chaoxing.com/oa/static/style/apps/forms/mobile/fore/images/icons/jpg.png"></div><div data-v-f15ee4e8="" class="upload_file_data"><div data-v-f15ee4e8="" class="upload_file_info"><h6 data-v-f15ee4e8="" class="upload_file_name owt2" tabindex="0" role="option" id="faceFileNameDisp">head.jpg</h6><p data-v-f15ee4e8="" class="upload_file_size owt1" tabindex="0" role="option" id="faceFileSizeDisp">170.77KB</p></div></div><a data-v-f15ee4e8="" class="upload_file_download" target="_blank" download-url=""></a></li></ul></div>
+        <div data-v-f15ee4e8="" class="form_img_forbid" id="facePhotoDetail" style="display:none;"><ul data-v-f15ee4e8="" class="form_upload_file"><li data-v-f15ee4e8="" class="upload_file_per" onclick="viewFacePhoto()"><div data-v-f15ee4e8="" class="upload_file_type"><img data-v-f15ee4e8="" class="upload_file_icon" id="facePhotoDetailIcon" src="https://office-static.chaoxing.com/oa/static/style/apps/forms/mobile/fore/images/icons/jpg.png"></div><div data-v-f15ee4e8="" class="upload_file_data"><div data-v-f15ee4e8="" class="upload_file_info"><h6 data-v-f15ee4e8="" class="upload_file_name owt2" tabindex="0" role="option" id="faceFileNameDisp"></h6><p data-v-f15ee4e8="" class="upload_file_size owt1" tabindex="0" role="option" id="faceFileSizeDisp">--</p></div></div><a data-v-f15ee4e8="" class="upload_file_download" target="_blank" download-url=""></a></li></ul></div>
         <div data-v-b1dba955="" class="form_widget_prompt"><div data-v-b1dba955="" class="widget_error_tip" style="display: none;"><p data-v-b1dba955="" class="must_word" tabindex="0" role="option"></p></div></div></div></div></div></div>
 
       <!-- comptid 13: 请假类型 (EDITABLE) -->
@@ -9498,7 +9498,7 @@ mjx-container[jax="SVG"] path[data-c], mjx-container[jax="SVG"] use[data-c] { st
           <div data-v-ff7a238a="" id="signatureEdit">
             <div data-v-ff7a238a="" class="autograph" id="signatureAutograph">
               <div data-v-ff7a238a="" class="agh_left" onclick="openSignaturePad()">
-                <img data-v-ff7a238a="" alt="" class="agh_img" id="signatureEditImg" src="img/qianming.png">
+                <img data-v-ff7a238a="" alt="" class="agh_img" id="signatureEditImg" src="">
                 <img data-v-ff7a238a="" class="agh_loading" src="https://office-static.chaoxing.com/oa/static/manage/mobile/assets/gif/signature_loading-kHczcdau.gif" alt="" style="display: none;">
               </div>
               <div data-v-ff7a238a="" class="agh_right">
@@ -9581,8 +9581,8 @@ const FORM_CACHE_FIELDS = [
   'leaveCitySelect',
   'leaveProvinceSelect'
 ];
-const DEFAULT_FACE_PHOTO_URL = 'img/head.jpg';
-const DEFAULT_SIGNATURE_URL = 'img/qianming.png';
+const DEFAULT_FACE_PHOTO_URL = '';
+const DEFAULT_SIGNATURE_URL = '';
 const MAX_CACHE_IMAGE_EDGE = 1280;
 const MAX_CACHE_DATA_URL_LENGTH = 3 * 1024 * 1024;
 
@@ -9595,13 +9595,10 @@ let facePhotoDataUrl = DEFAULT_FACE_PHOTO_URL;
 let signatureDataUrl = DEFAULT_SIGNATURE_URL;
 
 (function init() {
-  // 自动填充面部照片
-  facePhotoFile = { name: 'head.jpg', type: 'image/jpeg' };
-  document.getElementById('faceFileName').textContent = 'head.jpg';
-  document.getElementById('faceFileSize').textContent = '174.38KB';
-
-  // 自动填充签名（已在HTML中设置src="img/qianming.png"）
-  signatureData = DEFAULT_SIGNATURE_URL;
+  // 公开仓库不预置面部照片和签名图片
+  facePhotoFile = null;
+  clearFacePhotoUi();
+  clearSignatureUi();
 
   // 设置默认申请日期（昨天）
   const now = new Date();
@@ -9676,7 +9673,7 @@ function saveFormCache(showError) {
   } else if (facePhotoDataUrl && facePhotoDataUrl !== DEFAULT_FACE_PHOTO_URL) {
     if (facePhotoDataUrl.length <= MAX_CACHE_DATA_URL_LENGTH) {
       cache.facePhoto = {
-        name: facePhotoFile && facePhotoFile.name ? facePhotoFile.name : 'head.jpg',
+        name: facePhotoFile && facePhotoFile.name ? facePhotoFile.name : 'photo.jpg',
         type: facePhotoFile && facePhotoFile.type ? facePhotoFile.type : 'image/jpeg',
         size: facePhotoFile && facePhotoFile.size ? facePhotoFile.size : 0,
         dataUrl: facePhotoDataUrl
@@ -9713,7 +9710,7 @@ function syncCachedSelectDisplay() {
 
 function applyFacePhotoCache(photo) {
   facePhotoFile = {
-    name: photo.name || 'head.jpg',
+    name: photo.name || 'photo.jpg',
     type: photo.type || 'image/jpeg',
     size: photo.size || 0
   };
@@ -9998,8 +9995,8 @@ function switchToDetailMode(data) {
   // 更新面部照片 -> 显示文件列表样式
   document.getElementById('facePhotoEdit').style.display = 'none';
   document.getElementById('facePhotoDetail').style.display = '';
-  document.getElementById('faceFileNameDisp').textContent = facePhotoFile ? facePhotoFile.name : 'head.jpg';
-  document.getElementById('faceFileSizeDisp').textContent = facePhotoFile && facePhotoFile.size ? (facePhotoFile.size/1024).toFixed(2)+'KB' : '174.38KB';
+  document.getElementById('faceFileNameDisp').textContent = facePhotoFile ? facePhotoFile.name : '';
+  document.getElementById('faceFileSizeDisp').textContent = facePhotoFile && facePhotoFile.size ? (facePhotoFile.size/1024).toFixed(2)+'KB' : '--';
 
   // 更新请假类型
   document.getElementById('leaveTypeEdit').style.display = 'none';
