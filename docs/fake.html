@@ -9306,7 +9306,7 @@ mjx-container[jax="SVG"] path[data-c], mjx-container[jax="SVG"] use[data-c] { st
     </div>
     <div data-v-a7ff6443="" class="approve-header__info">
       <div data-v-a7ff6443="" class="user-info">
-        <img data-v-a7ff6443="" class="user-info__head" id="detailAvatar" src="">
+        <img data-v-a7ff6443="" class="user-info__head" id="detailAvatar" src="https://photo.chaoxing.com/p/323291431_50">
         <div data-v-a7ff6443="" class="user-info__detail">
           <div data-v-a7ff6443="" class="user-info__main"><div data-v-a7ff6443="" class="user-info__name" id="detailName"></div></div>
           <div data-v-a7ff6443="" class="user-info__other">
@@ -9361,7 +9361,7 @@ mjx-container[jax="SVG"] path[data-c], mjx-container[jax="SVG"] use[data-c] { st
 
       <!-- comptid 3: 姓名 -->
       <div data-v-b1dba955="" data-v-64e12644="" data-v-3a81a366="" class="form_widget noClick widget-group" comptid="3" isedit="true">
-        <div data-v-b1dba955="" class=""><div data-v-b1dba955="" class="widget-title-area" style="text-align: left;"><div data-v-b1dba955="" class="form_widget_title"><h2 data-v-b1dba955="" class="widget_name" tabindex="0" role="option" aria-label="姓名标题"><em data-v-b1dba955="" class="option-star" aria-hidden="true"></em><label data-v-b1dba955="" class="">姓名</label></h2></div><div data-v-e2cc376b="" data-v-b1dba955="" class="widget-describe-icon"><i data-v-e2cc376b="" class="" style="display: block;"></i><div data-v-e2cc376b="" class="form_widget_describe"></div></div></div><div data-v-b1dba955="" class="widget-write-area"><div data-v-b1dba955="" class="form_widget_data"><div data-v-64e12644="" class="form_widget_data"><div data-v-64e12644="" class="form_contact_forbid"><ul data-v-64e12644="" class="ctat_res"><li data-v-64e12644="" class="ctat_per"><img data-v-64e12644="" id="avatarPreview" src="" alt="" class="ctat_user_img"><span data-v-64e12644="" class="ctat_name" id="studentNameDisplay" style="display:none;"></span><input id="studentNameInput" value="" oninput="syncName(this.value)" style="background:transparent;border:none;color:#006ce2;font-size:0.26rem;height:auto;padding:0;line-height:0.62rem;max-width:6rem;vertical-align:top;outline:none;border-radius:0;"></li></ul><p data-v-64e12644="" class="space_line"></p></div></div><div data-v-b1dba955="" class="form_widget_prompt"><div data-v-b1dba955="" class="widget_error_tip" style="display: none;"><p data-v-b1dba955="" class="must_word" tabindex="0" role="option"></p></div></div></div></div></div></div>
+        <div data-v-b1dba955="" class=""><div data-v-b1dba955="" class="widget-title-area" style="text-align: left;"><div data-v-b1dba955="" class="form_widget_title"><h2 data-v-b1dba955="" class="widget_name" tabindex="0" role="option" aria-label="姓名标题"><em data-v-b1dba955="" class="option-star" aria-hidden="true"></em><label data-v-b1dba955="" class="">姓名</label></h2></div><div data-v-e2cc376b="" data-v-b1dba955="" class="widget-describe-icon"><i data-v-e2cc376b="" class="" style="display: block;"></i><div data-v-e2cc376b="" class="form_widget_describe"></div></div></div><div data-v-b1dba955="" class="widget-write-area"><div data-v-b1dba955="" class="form_widget_data"><div data-v-64e12644="" class="form_widget_data"><div data-v-64e12644="" class="form_contact_forbid"><ul data-v-64e12644="" class="ctat_res"><li data-v-64e12644="" class="ctat_per"><img data-v-64e12644="" id="avatarPreview" src="https://photo.chaoxing.com/p/323291431_50" alt="" class="ctat_user_img"><span data-v-64e12644="" class="ctat_name" id="studentNameDisplay" style="display:none;"></span><input id="studentNameInput" value="" oninput="syncName(this.value)" style="background:transparent;border:none;color:#006ce2;font-size:0.26rem;height:auto;padding:0;line-height:0.62rem;max-width:6rem;vertical-align:top;outline:none;border-radius:0;"></li></ul><p data-v-64e12644="" class="space_line"></p></div></div><div data-v-b1dba955="" class="form_widget_prompt"><div data-v-b1dba955="" class="widget_error_tip" style="display: none;"><p data-v-b1dba955="" class="must_word" tabindex="0" role="option"></p></div></div></div></div></div></div>
 
       <!-- comptid 4: 学号 -->
       <div data-v-b1dba955="" data-v-31e74985="" data-v-3a81a366="" class="form_widget noClick" comptid="4" isedit="true">
@@ -9553,7 +9553,7 @@ mjx-container[jax="SVG"] path[data-c], mjx-container[jax="SVG"] use[data-c] { st
 // ===== 模拟用户数据 =====
 const currentUser = {
   name: '',
-  avatar: '',
+  avatar: 'https://photo.chaoxing.com/p/323291431_50',
   sno: '',
   grade: '',
   dept: '',
@@ -9561,16 +9561,38 @@ const currentUser = {
   className: '',
   counselorName: '',
   counselorId: '',
-  counselorAvatar: ''
+  counselorAvatar: 'https://photo.chaoxing.com/p/306359839_50'
 };
+
+// ===== 表单缓存（不缓存时间/日期） =====
+const FORM_CACHE_KEY = 'leaveFormDraft:v1';
+const FORM_CACHE_FIELDS = [
+  'studentNameInput',
+  'studentIdInput',
+  'gradeInput',
+  'deptInput',
+  'majorInput',
+  'classNameInput',
+  'dormInput',
+  'counselorNameInput',
+  'counselorIdInput',
+  'leaveTypeSelect',
+  'leaveCampusSelect',
+  'leaveCitySelect',
+  'leaveProvinceSelect'
+];
+const DEFAULT_FACE_PHOTO_URL = 'img/head.jpg';
+const DEFAULT_SIGNATURE_URL = 'img/qianming.png';
+const MAX_CACHE_IMAGE_EDGE = 1280;
+const MAX_CACHE_DATA_URL_LENGTH = 3 * 1024 * 1024;
 
 // ===== 变量声明 =====
 let facePhotoFile = null;
 let signatureData = null;
 
 // ===== 初始化 =====
-let facePhotoDataUrl = 'img/head.jpg';
-let signatureDataUrl = 'img/qianming.png';
+let facePhotoDataUrl = DEFAULT_FACE_PHOTO_URL;
+let signatureDataUrl = DEFAULT_SIGNATURE_URL;
 
 (function init() {
   // 自动填充面部照片
@@ -9579,7 +9601,7 @@ let signatureDataUrl = 'img/qianming.png';
   document.getElementById('faceFileSize').textContent = '174.38KB';
 
   // 自动填充签名（已在HTML中设置src="img/qianming.png"）
-  signatureData = 'img/qianming.png';
+  signatureData = DEFAULT_SIGNATURE_URL;
 
   // 设置默认申请日期（昨天）
   const now = new Date();
@@ -9598,7 +9620,171 @@ let signatureDataUrl = 'img/qianming.png';
   document.getElementById('startTimeDispText').textContent = startStr.replace('T',' ');
   document.getElementById('endTimeDispText').textContent = endStr.replace('T',' ');
   calcDuration();
+  loadFormCache();
+  bindFormCache();
 })();
+
+// ===== 表单缓存 =====
+function readFormCache() {
+  try {
+    var raw = localStorage.getItem(FORM_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function loadFormCache() {
+  var cache = readFormCache();
+  if (!cache) return;
+  FORM_CACHE_FIELDS.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el || cache[id] === undefined) return;
+    el.value = cache[id];
+  });
+  syncName(document.getElementById('studentNameInput').value);
+  syncHeaderInfo();
+  syncCounselorName(document.getElementById('counselorNameInput').value);
+  syncCachedSelectDisplay();
+  if (Object.prototype.hasOwnProperty.call(cache, 'facePhoto')) {
+    if (cache.facePhoto && cache.facePhoto.dataUrl) applyFacePhotoCache(cache.facePhoto);
+    else if (cache.facePhoto === null) clearFacePhotoUi();
+  }
+  if (Object.prototype.hasOwnProperty.call(cache, 'signature')) {
+    if (cache.signature && cache.signature.dataUrl) applySignatureCache(cache.signature);
+    else if (cache.signature === null) clearSignatureUi();
+  }
+}
+
+function bindFormCache() {
+  FORM_CACHE_FIELDS.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', saveFormCache);
+    el.addEventListener('change', saveFormCache);
+  });
+}
+
+function saveFormCache(showError) {
+  var cache = {};
+  FORM_CACHE_FIELDS.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) cache[id] = el.value;
+  });
+  if (facePhotoDataUrl === null) {
+    cache.facePhoto = null;
+  } else if (facePhotoDataUrl && facePhotoDataUrl !== DEFAULT_FACE_PHOTO_URL) {
+    if (facePhotoDataUrl.length <= MAX_CACHE_DATA_URL_LENGTH) {
+      cache.facePhoto = {
+        name: facePhotoFile && facePhotoFile.name ? facePhotoFile.name : 'head.jpg',
+        type: facePhotoFile && facePhotoFile.type ? facePhotoFile.type : 'image/jpeg',
+        size: facePhotoFile && facePhotoFile.size ? facePhotoFile.size : 0,
+        dataUrl: facePhotoDataUrl
+      };
+    } else if (showError === true) {
+      showToast('图片较大，无法缓存到本地');
+    }
+  }
+  if (signatureDataUrl === null) {
+    cache.signature = null;
+  } else if (signatureDataUrl && signatureDataUrl !== DEFAULT_SIGNATURE_URL) {
+    cache.signature = { dataUrl: signatureDataUrl };
+  }
+  try {
+    localStorage.setItem(FORM_CACHE_KEY, JSON.stringify(cache));
+  } catch (e) {
+    if (cache.facePhoto) {
+      delete cache.facePhoto;
+      try {
+        localStorage.setItem(FORM_CACHE_KEY, JSON.stringify(cache));
+      } catch (err) {}
+    }
+    if (showError === true) showToast('缓存空间不足，图片未缓存');
+  }
+}
+
+function syncCachedSelectDisplay() {
+  document.getElementById('leaveTypeDispText').textContent = document.getElementById('leaveTypeSelect').value;
+  document.getElementById('leaveTypeDispText2').textContent = document.getElementById('leaveTypeSelect').value;
+  document.getElementById('leaveCampusDispText').textContent = document.getElementById('leaveCampusSelect').value;
+  document.getElementById('leaveCityDispText').textContent = document.getElementById('leaveCitySelect').value;
+  document.getElementById('leaveProvinceDispText').textContent = document.getElementById('leaveProvinceSelect').value;
+}
+
+function applyFacePhotoCache(photo) {
+  facePhotoFile = {
+    name: photo.name || 'head.jpg',
+    type: photo.type || 'image/jpeg',
+    size: photo.size || 0
+  };
+  facePhotoDataUrl = photo.dataUrl;
+  document.getElementById('faceFileName').textContent = facePhotoFile.name;
+  document.getElementById('faceFileSize').textContent = facePhotoFile.size ? (facePhotoFile.size / 1024).toFixed(2) + 'KB' : '--';
+  document.getElementById('faceFileItem').style.display = '';
+  var icon = document.getElementById('faceFileItem').querySelector('.upload_file_icon');
+  icon.src = facePhotoDataUrl;
+  icon.style.borderRadius = '4px';
+}
+
+function clearFacePhotoUi() {
+  facePhotoFile = null;
+  facePhotoDataUrl = null;
+  document.getElementById('faceFileName').textContent = '';
+  document.getElementById('faceFileSize').textContent = '';
+  document.getElementById('faceFileItem').style.display = 'none';
+}
+
+function applySignatureCache(signature) {
+  signatureData = signature.dataUrl;
+  signatureDataUrl = signature.dataUrl;
+  document.getElementById('signatureEditImg').src = signatureDataUrl;
+  document.getElementById('signatureAutograph').style.display = '';
+  var ph = document.getElementById('signaturePlaceholderDiv');
+  if (ph) ph.style.display = 'none';
+}
+
+function clearSignatureUi() {
+  signatureData = null;
+  signatureDataUrl = null;
+  document.getElementById('signatureEditImg').src = '';
+  document.getElementById('signatureAutograph').style.display = 'none';
+  showSignaturePlaceholder();
+}
+
+function showSignaturePlaceholder() {
+  if (!document.getElementById('signaturePlaceholderDiv')) {
+    var ph = document.createElement('div');
+    ph.id = 'signaturePlaceholderDiv';
+    ph.style.cssText = 'border:1px dashed #dedfe0;border-radius:5px;padding:20px;text-align:center;min-height:80px;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+    ph.innerHTML = '<span style="color:#c0c0c3;font-size:14px;">点击进行手写签名</span>';
+    ph.onclick = openSignaturePad;
+    document.getElementById('signatureEdit').appendChild(ph);
+  } else {
+    document.getElementById('signaturePlaceholderDiv').style.display = '';
+  }
+}
+
+function compressImageForCache(dataUrl, callback) {
+  var img = new Image();
+  img.onload = function() {
+    var longest = Math.max(img.width, img.height);
+    if (!longest || (longest <= MAX_CACHE_IMAGE_EDGE && dataUrl.length <= MAX_CACHE_DATA_URL_LENGTH)) {
+      callback(dataUrl);
+      return;
+    }
+    var scale = Math.min(1, MAX_CACHE_IMAGE_EDGE / longest);
+    var canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(img.width * scale));
+    canvas.height = Math.max(1, Math.round(img.height * scale));
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    callback(canvas.toDataURL('image/jpeg', 0.82));
+  };
+  img.onerror = function() { callback(dataUrl); };
+  img.src = dataUrl;
+}
 
 // ===== 显示/隐藏编辑控件 =====
 function showEditMode() {
@@ -9636,21 +9822,21 @@ function handleFacePhoto(files) {
   facePhotoFile = file;
   const reader = new FileReader();
   reader.onload = function(e) {
-    facePhotoDataUrl = e.target.result;
-    document.getElementById('faceFileName').textContent = file.name;
-    document.getElementById('faceFileSize').textContent = (file.size/1024).toFixed(2)+'KB';
-    document.getElementById('faceFileItem').style.display = '';
-    document.getElementById('faceFileItem').querySelector('.upload_file_icon').src = facePhotoDataUrl;
-    document.getElementById('faceFileItem').querySelector('.upload_file_icon').style.borderRadius = '4px';
+    compressImageForCache(e.target.result, function(cachedDataUrl) {
+      facePhotoDataUrl = cachedDataUrl;
+      document.getElementById('faceFileName').textContent = file.name;
+      document.getElementById('faceFileSize').textContent = (file.size/1024).toFixed(2)+'KB';
+      document.getElementById('faceFileItem').style.display = '';
+      document.getElementById('faceFileItem').querySelector('.upload_file_icon').src = facePhotoDataUrl;
+      document.getElementById('faceFileItem').querySelector('.upload_file_icon').style.borderRadius = '4px';
+      saveFormCache(true);
+    });
   };
   reader.readAsDataURL(file);
 }
 function removeFacePhoto() {
-  facePhotoFile = null;
-  facePhotoDataUrl = null;
-  document.getElementById('faceFileName').textContent = '';
-  document.getElementById('faceFileSize').textContent = '';
-  document.getElementById('faceFileItem').style.display = 'none';
+  clearFacePhotoUi();
+  saveFormCache();
 }
 
 // ===== 时长计算 =====
@@ -9696,35 +9882,23 @@ function openSignaturePad() {
     document.getElementById('signatureAutograph').style.display = '';
     var ph = document.getElementById('signaturePlaceholderDiv');
     if (ph) ph.style.display = 'none';
+    saveFormCache();
     document.body.removeChild(popup);
   };
   popup.addEventListener('click', function(e) { if (e.target === popup) document.body.removeChild(popup); });
 }
 function removeSignature() {
-  signatureData = null;
-  signatureDataUrl = null;
-  document.getElementById('signatureEditImg').src = '';
-  document.getElementById('signatureAutograph').style.display = 'none';
-  // 显示一个占位上传区域
-  if (!document.getElementById('signaturePlaceholderDiv')) {
-    var ph = document.createElement('div');
-    ph.id = 'signaturePlaceholderDiv';
-    ph.style.cssText = 'border:1px dashed #dedfe0;border-radius:5px;padding:20px;text-align:center;min-height:80px;display:flex;align-items:center;justify-content:center;cursor:pointer;';
-    ph.innerHTML = '<span style="color:#c0c0c3;font-size:14px;">点击进行手写签名</span>';
-    ph.onclick = openSignaturePad;
-    document.getElementById('signatureEdit').appendChild(ph);
-  } else {
-    document.getElementById('signaturePlaceholderDiv').style.display = '';
-  }
+  clearSignatureUi();
+  saveFormCache();
 }
 
 // ===== 图片查看器 =====
 function viewFacePhoto() {
-  var src = facePhotoDataUrl || 'img/head.jpg';
+  var src = facePhotoDataUrl || DEFAULT_FACE_PHOTO_URL;
   showImageViewer(src);
 }
 function viewSignature() {
-  var src = signatureDataUrl || 'img/qianming.png';
+  var src = signatureDataUrl || DEFAULT_SIGNATURE_URL;
   if (!src) return;
   showImageViewer(src);
 }
@@ -9858,7 +10032,7 @@ function switchToDetailMode(data) {
   // 更新签名
   document.getElementById('signatureEdit').style.display = 'none';
   document.getElementById('signatureDetail').style.display = '';
-  document.getElementById('signatureDetailImg').src = typeof signatureData === 'string' && signatureData.startsWith('data:') ? signatureData : 'img/qianming.png';
+  document.getElementById('signatureDetailImg').src = signatureDataUrl || DEFAULT_SIGNATURE_URL;
 
   // 模拟审批时间：提交时间为申请日10:18，审批同日晚20:58
   const submitTime = data.applyDate + ' 10:18:28';
