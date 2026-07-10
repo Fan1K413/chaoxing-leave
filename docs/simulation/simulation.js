@@ -127,9 +127,10 @@ function saveFormCache(showError) {
     cache.facePhoto = null;
   } else if (facePhotoDataUrl && facePhotoDataUrl !== DEFAULT_FACE_PHOTO_URL) {
     if (facePhotoDataUrl.length <= MAX_CACHE_DATA_URL_LENGTH) {
+      var cachedMimeType = getFacePhotoDataMimeType(facePhotoDataUrl);
       cache.facePhoto = {
-        name: facePhotoFile && facePhotoFile.name ? facePhotoFile.name : 'photo.jpg',
-        type: facePhotoFile && facePhotoFile.type ? facePhotoFile.type : 'image/jpeg',
+        name: getFacePhotoFileName(facePhotoFile && facePhotoFile.name ? facePhotoFile.name : 'photo', cachedMimeType),
+        type: cachedMimeType,
         size: facePhotoFile && facePhotoFile.size ? facePhotoFile.size : 0,
         dataUrl: facePhotoDataUrl
       };
@@ -348,6 +349,72 @@ function removeSignature() {
 }
 
 // ===== 图片查看器 =====
+function getFacePhotoDataMimeType(dataUrl) {
+  var match = /^data:([^;,]+)[;,]/i.exec(dataUrl || '');
+  return match ? match[1].toLowerCase() : 'image/jpeg';
+}
+
+function getFacePhotoExtension(mimeType) {
+  return {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp'
+  }[mimeType] || 'jpg';
+}
+
+function getFacePhotoFileName(name, mimeType) {
+  var extension = getFacePhotoExtension(mimeType);
+  var baseName = (name || 'photo').replace(/[\\/:*?"<>|]/g, '_').replace(/\.[^.]+$/, '');
+  return (baseName || 'photo') + '.' + extension;
+}
+
+function dataUrlToBlob(dataUrl) {
+  var parts = (dataUrl || '').split(',');
+  if (parts.length !== 2 || !/^data:/i.test(parts[0])) return null;
+  try {
+    var binary = atob(parts[1]);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: getFacePhotoDataMimeType(dataUrl) });
+  } catch (e) {
+    return null;
+  }
+}
+
+function triggerFacePhotoDownload(blob, name) {
+  var url = URL.createObjectURL(blob);
+  var link = document.createElement('a');
+  link.href = url;
+  link.download = name;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+
+function downloadFacePhoto(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  if (!facePhotoDataUrl) {
+    showToast('图片不可下载');
+    return false;
+  }
+  var mimeType = getFacePhotoDataMimeType(facePhotoDataUrl);
+  var storedName = facePhotoFile && facePhotoFile.name ? facePhotoFile.name : 'face-photo';
+  var link = document.createElement('a');
+  link.href = facePhotoDataUrl;
+  link.download = getFacePhotoFileName(storedName, mimeType);
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  return false;
+}
+
 function viewFacePhoto() {
   var src = facePhotoDataUrl || DEFAULT_FACE_PHOTO_URL;
   showImageViewer(src);
