@@ -33,10 +33,16 @@ const DEFAULT_FACE_PHOTO_URL = '';
 const DEFAULT_SIGNATURE_URL = '';
 const MAX_CACHE_IMAGE_EDGE = 1280;
 const MAX_CACHE_DATA_URL_LENGTH = 3 * 1024 * 1024;
+const APPROVAL_OPERATION_FIELD_ID = '__approval_operation__';
 
 // ===== 变量声明 =====
 let facePhotoFile = null;
 let signatureData = null;
+let dataLogFields = [];
+let confirmedVisibleFieldIds = new Set();
+let draftVisibleFieldIds = new Set();
+let fieldVisibilityLastFocused = null;
+let fieldVisibilityBodyOverflow = '';
 
 // ===== 初始化 =====
 let facePhotoDataUrl = DEFAULT_FACE_PHOTO_URL;
@@ -67,6 +73,7 @@ let signatureDataUrl = DEFAULT_SIGNATURE_URL;
   calcDuration();
   loadFormCache();
   bindFormCache();
+  bindFieldVisibilityPicker();
 })();
 
 // ===== 表单缓存 =====
@@ -531,28 +538,167 @@ function switchToDetailMode(data) {
 
   // 数据日志
   document.getElementById('dataLogSection').style.display = '';
-  document.getElementById('dataLogList').innerHTML =
-    '<div data-v-6545c99f="" data-v-cefb6c9b="" class="data-log-per">'+
-      '<div data-v-fbbf6174="" data-v-6545c99f="" class="data-introduce">'+
-        '<img data-v-fbbf6174="" src="'+currentUser.counselorAvatar+'" alt="" class="prev-user-img">'+
-        '<span data-v-fbbf6174="" class="prev-user-name">'+currentUser.counselorName+'</span>'+
-        '<span data-v-fbbf6174="" class="data-log-type aprv">处理</span>'+
-        '<span data-v-fbbf6174="" class="data-log-word">了这条数据</span>'+
-        '<span data-v-fbbf6174="" class="data-log-time">'+approveTime+'</span>'+
-      '</div>'+
-      '<ul data-v-6545c99f="" class="data-log-list"><div data-v-653e4663="" data-v-6545c99f=""><li data-v-653e4663="" class="data-field-info"><div data-v-653e4663="" class="data-introduce">进行了 同意 操作 <span data-v-653e4663="" class="data-log-word"></span></div></li></div></ul>'+
-    '</div>'+
-    '<div data-v-6545c99f="" data-v-cefb6c9b="" class="data-log-per">'+
-      '<div data-v-fbbf6174="" data-v-6545c99f="" class="data-introduce">'+
-        '<img data-v-fbbf6174="" src="'+currentUser.avatar+'" alt="" class="prev-user-img">'+
-        '<span data-v-fbbf6174="" class="prev-user-name">'+currentUser.name+'</span>'+
-        '<span data-v-fbbf6174="" class="data-log-type create">创建</span>'+
-        '<span data-v-fbbf6174="" class="data-log-word">了这条数据</span>'+
-        '<span data-v-fbbf6174="" class="data-log-time">'+submitTime+'</span>'+
-      '</div>'+
-    '</div>';
+  initializeDataLogFields();
+  window.dataLogSubmitTime = submitTime;
+  window.dataLogApproveTime = approveTime;
+  renderDataLog(submitTime, approveTime);
+  applyFieldVisibility();
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function getDataLogFields() {
+  return Array.prototype.slice.call(document.querySelectorAll('.fields-preview .form_widget[comptid]')).map(function(widget) {
+    var id = widget.getAttribute('comptid');
+    var label = widget.querySelector('.form_widget_title label');
+    return { id: id, label: label ? label.textContent.replace(/\s+/g, ' ').trim() : '' };
+  }).filter(function(field) {
+    return field.id !== '2' && field.id !== '22' && field.label;
+  }).concat([{ id: APPROVAL_OPERATION_FIELD_ID, label: '审批操作', type: 'approval-operation' }]);
+}
+
+function initializeDataLogFields() {
+  dataLogFields = getDataLogFields();
+  confirmedVisibleFieldIds = new Set(dataLogFields.map(function(field) { return field.id; }));
+  updateDataLogEyeState();
+  applyFieldVisibility();
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, function(character) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+  });
+}
+
+function renderDataLog(submitTime, approveTime) {
+  document.getElementById('dataLogList').innerHTML =
+    '<div data-v-6545c99f="" data-v-cefb6c9b="" class="data-log-per" id="approvalOperationLog">' +
+      '<div data-v-fbbf6174="" data-v-6545c99f="" class="data-introduce">' +
+        '<img data-v-fbbf6174="" src="' + currentUser.counselorAvatar + '" alt="" class="prev-user-img">' +
+        '<span data-v-fbbf6174="" class="prev-user-name">' + escapeHtml(currentUser.counselorName) + '</span>' +
+        '<span data-v-fbbf6174="" class="data-log-type aprv">处理</span>' +
+        '<span data-v-fbbf6174="" class="data-log-word">了这条数据</span>' +
+        '<span data-v-fbbf6174="" class="data-log-time">' + escapeHtml(approveTime) + '</span>' +
+      '</div>' +
+      '<ul data-v-6545c99f="" class="data-log-list"><li data-v-653e4663="" class="data-field-info"><div data-v-653e4663="" class="data-introduce">进行了 同意 操作</div></li></ul>' +
+    '</div>' +
+    '<div data-v-6545c99f="" data-v-cefb6c9b="" class="data-log-per">' +
+      '<div data-v-fbbf6174="" data-v-6545c99f="" class="data-introduce">' +
+        '<img data-v-fbbf6174="" src="' + currentUser.avatar + '" alt="" class="prev-user-img">' +
+        '<span data-v-fbbf6174="" class="prev-user-name">' + escapeHtml(currentUser.name) + '</span>' +
+        '<span data-v-fbbf6174="" class="data-log-type create">创建</span>' +
+        '<span data-v-fbbf6174="" class="data-log-word">了这条数据</span>' +
+        '<span data-v-fbbf6174="" class="data-log-time">' + escapeHtml(submitTime) + '</span>' +
+      '</div>' +
+    '</div>';
+}
+
+function updateDataLogEyeState() {
+  var trigger = document.getElementById('fieldVisibilityTrigger');
+  if (!trigger) return;
+  trigger.classList.toggle('checked', dataLogFields.length > 0 && confirmedVisibleFieldIds.size === dataLogFields.length);
+}
+
+function applyFieldVisibility() {
+  dataLogFields.forEach(function(field) {
+    if (field.id === APPROVAL_OPERATION_FIELD_ID) {
+      var approvalOperationLog = document.getElementById('approvalOperationLog');
+      if (approvalOperationLog) approvalOperationLog.style.display = confirmedVisibleFieldIds.has(field.id) ? '' : 'none';
+      return;
+    }
+    var widget = document.querySelector('.fields-preview .form_widget[comptid="' + field.id + '"]');
+    if (widget) widget.style.display = confirmedVisibleFieldIds.has(field.id) ? '' : 'none';
+  });
+}
+
+function renderFieldVisibilityList() {
+  var list = document.getElementById('fieldVisibilityList');
+  var empty = document.getElementById('fieldVisibilityEmpty');
+  var query = document.getElementById('fieldVisibilitySearch').value.trim().toLowerCase();
+  var filteredFields = dataLogFields.filter(function(field) { return field.label.toLowerCase().indexOf(query) !== -1; });
+  list.textContent = '';
+  var allSelected = draftVisibleFieldIds.size === dataLogFields.length;
+  var selectAllRow = document.createElement('label');
+  selectAllRow.className = 'field-visibility-row';
+  var selectAll = document.createElement('input');
+  selectAll.type = 'checkbox';
+  selectAll.id = 'fieldVisibilitySelectAll';
+  selectAll.checked = draftVisibleFieldIds.size === dataLogFields.length;
+  selectAll.indeterminate = draftVisibleFieldIds.size > 0 && draftVisibleFieldIds.size < dataLogFields.length;
+  selectAllRow.appendChild(selectAll);
+  selectAllRow.appendChild(document.createTextNode(allSelected ? '取消全选' : '全选'));
+  list.appendChild(selectAllRow);
+  filteredFields.forEach(function(field) {
+    var row = document.createElement('label');
+    row.className = 'field-visibility-row';
+    var checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = field.id;
+    checkbox.checked = draftVisibleFieldIds.has(field.id);
+    row.appendChild(checkbox);
+    row.appendChild(document.createTextNode(field.label));
+    list.appendChild(row);
+  });
+  empty.hidden = filteredFields.length !== 0;
+}
+
+function openFieldVisibilityPicker() {
+  fieldVisibilityLastFocused = document.activeElement;
+  draftVisibleFieldIds = new Set(confirmedVisibleFieldIds);
+  var modal = document.getElementById('fieldVisibilityModal');
+  var search = document.getElementById('fieldVisibilitySearch');
+  fieldVisibilityBodyOverflow = document.body.style.overflow;
+  document.body.style.overflow = 'hidden';
+  search.value = '';
+  renderFieldVisibilityList();
+  modal.hidden = false;
+  modal.setAttribute('aria-hidden', 'false');
+  document.getElementById('fieldVisibilityTrigger').setAttribute('aria-expanded', 'true');
+  search.focus();
+}
+
+function closeFieldVisibilityPicker(commit) {
+  var modal = document.getElementById('fieldVisibilityModal');
+  if (commit) {
+    confirmedVisibleFieldIds = new Set(draftVisibleFieldIds);
+    updateDataLogEyeState();
+    applyFieldVisibility();
+  }
+  modal.hidden = true;
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = fieldVisibilityBodyOverflow;
+  document.getElementById('fieldVisibilityTrigger').setAttribute('aria-expanded', 'false');
+  if (fieldVisibilityLastFocused && fieldVisibilityLastFocused.focus) fieldVisibilityLastFocused.focus();
+}
+
+function bindFieldVisibilityPicker() {
+  document.getElementById('fieldVisibilityTrigger').addEventListener('click', openFieldVisibilityPicker);
+  document.getElementById('fieldVisibilitySearch').addEventListener('input', renderFieldVisibilityList);
+  document.getElementById('fieldVisibilityList').addEventListener('change', function(event) {
+    var checkbox = event.target;
+    if (!checkbox.matches('input[type="checkbox"]')) return;
+    if (checkbox.id === 'fieldVisibilitySelectAll') {
+      draftVisibleFieldIds = checkbox.checked ? new Set(dataLogFields.map(function(field) { return field.id; })) : new Set();
+    } else if (checkbox.checked) {
+      draftVisibleFieldIds.add(checkbox.value);
+    } else {
+      draftVisibleFieldIds.delete(checkbox.value);
+    }
+    renderFieldVisibilityList();
+  });
+  document.getElementById('fieldVisibilityCancel').addEventListener('click', function() { closeFieldVisibilityPicker(false); });
+  document.getElementById('fieldVisibilityConfirm').addEventListener('click', function() { closeFieldVisibilityPicker(true); });
+  document.getElementById('fieldVisibilityModal').addEventListener('click', function(event) {
+    if (event.target.dataset.fieldVisibilityClose === 'true') closeFieldVisibilityPicker(false);
+  });
+  document.addEventListener('keydown', function(event) {
+    var modal = document.getElementById('fieldVisibilityModal');
+    if (modal.hidden) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeFieldVisibilityPicker(false);
+    }
+  });
 }
 
 function handleCancel() {

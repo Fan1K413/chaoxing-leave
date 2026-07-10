@@ -252,11 +252,30 @@
 
 <!-- ===== 数据日志（提交后显示） ===== -->
 <div data-v-cefb6c9b="" class="aper_pass_data" id="dataLogSection" style="display:none;border-top:0.2rem solid #f5f6f8;">
-  <div data-v-cefb6c9b="" class="aper_pass_top"><h6 data-v-cefb6c9b="" class="pass_top_title">数据日志 <span data-v-cefb6c9b="" class="show-field-img checked"></span></h6></div>
+  <div data-v-cefb6c9b="" class="aper_pass_top"><h6 data-v-cefb6c9b="" class="pass_top_title">数据日志 <button data-v-cefb6c9b="" type="button" class="show-field-img checked" id="fieldVisibilityTrigger" aria-label="设置表单字段显示" aria-haspopup="dialog" aria-expanded="false"></button></h6></div>
   <div data-v-cefb6c9b="" class="aper_pass_cont form_preview_cont"><div data-v-cefb6c9b="" class="form-data-logging" id="dataLogList"></div></div>
 </div>
 
 </div></div></div>
+
+<!-- ===== 表单字段显示设置 ===== -->
+<div class="field-visibility-modal" id="fieldVisibilityModal" hidden aria-hidden="true">
+  <div class="field-visibility-backdrop" data-field-visibility-close="true"></div>
+  <section class="field-visibility-dialog" role="dialog" aria-modal="true" aria-labelledby="fieldVisibilityTitle">
+    <h2 class="field-visibility-title" id="fieldVisibilityTitle">表单字段显示</h2>
+    <label class="field-visibility-search" for="fieldVisibilitySearch">
+      <span class="field-visibility-search-icon" aria-hidden="true"></span>
+      <span class="sr-only">搜索字段</span>
+      <input id="fieldVisibilitySearch" type="search" placeholder="搜索" autocomplete="off">
+    </label>
+    <div class="field-visibility-list" id="fieldVisibilityList"></div>
+    <p class="field-visibility-empty" id="fieldVisibilityEmpty" hidden>没有匹配的字段</p>
+    <div class="field-visibility-footer">
+      <button type="button" class="field-visibility-action field-visibility-cancel" id="fieldVisibilityCancel">取消</button>
+      <button type="button" class="field-visibility-action field-visibility-confirm" id="fieldVisibilityConfirm">确定</button>
+    </div>
+  </section>
+</div>
 
 <!-- ===== 底部按钮（编辑模式） ===== -->
 <div id="footerBar" class="footer-bar-real">
