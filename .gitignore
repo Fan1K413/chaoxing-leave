@@ -6,5 +6,9 @@ cookies
 *.png
 *.gif
 *.bmp
+*.bak
+*.bak-*
+cleanup-backup-*/
+local-backups/
 cancel/location.json
 leave/archive/

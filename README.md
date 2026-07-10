@@ -29,7 +29,9 @@
 ├── docs/
 │   ├── index.html             # 公开说明页
 │   └── simulation/
-│       └── index.html         # 模拟请假页面；不预置照片或签名图片
+│       ├── index.html         # 模拟请假页面结构；不预置照片或签名图片
+│       ├── simulation.css     # 模拟页样式
+│       └── simulation.js      # 模拟页交互、缓存和提交演示逻辑
 ├── .gitignore
 └── README.md
 ```
@@ -100,6 +102,8 @@ CANCEL_ADDRESS=山东省济南市...
 打开 `docs/simulation` 可以在浏览器里模拟请假表单填写与提交，适合提前检查页面展示效果。
 
 公开仓库不预置默认照片或签名图片。首次打开时需要自行上传面部照片并手写签名；完成后这些内容会缓存在当前浏览器中，下次打开同一页面会自动恢复。
+
+页面资源已拆分为 `index.html`、`simulation.css` 和 `simulation.js`。样式文件只保留模拟页需要的表单、上传、签名、审批流程和自定义控件样式；本地小图标资源以内嵌 data URI 保存在 CSS 中，避免额外维护 assets 目录。
 
 ### 自动缓存
 
