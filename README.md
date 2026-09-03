@@ -58,7 +58,7 @@ Settings → Secrets and variables → Actions → New repository secret
 | Secret | 说明 |
 | --- | --- |
 | `CHAOXING_COOKIES` | 学习通 / 超星 OA 登录 Cookie |
-| `LEAVE_PHOTO_URL` | 请假面部拍照图片链接 |
+| `PHOTO_OBJECT_ID` | 请假面部照片上传后返回的 `objectId` |
 | `CANCEL_LAT` | 销假定位纬度 |
 | `CANCEL_LNG` | 销假定位经度 |
 | `CANCEL_ADDRESS` | 销假定位地址 |
@@ -75,15 +75,15 @@ key1=value1; key2=value2; key3=value3
 
 只需要填 Cookie 内容，不要带 `Cookie:` 前缀。
 
-### `LEAVE_PHOTO_URL`
+### `PHOTO_OBJECT_ID`
 
-填一张可被 GitHub Actions 访问的图片链接，例如：
+先在超星中上传面部照片，再填写上传接口返回的 32 位 `objectId`，例如：
 
 ```text
-https://example.com/photo.jpg
+0123456789abcdef0123456789abcdef
 ```
 
-不要把本人照片直接提交到公开仓库。
+脚本会根据 `objectId` 自动生成图片地址。不要把本人照片或 `objectId` 直接提交到公开仓库。
 
 ### 销假定位
 
@@ -157,14 +157,14 @@ key1=value1; key2=value2; key3=value3
 
 ```bash
 CHAOXING_COOKIES='你的 Cookie' \
-LEAVE_PHOTO_URL='https://example.com/photo.jpg' \
+PHOTO_OBJECT_ID='32 位 objectId' \
 bash leave.sh
 ```
 
 或使用根目录 `cookies` 文件：
 
 ```bash
-LEAVE_PHOTO_URL='https://example.com/photo.jpg' bash leave.sh
+PHOTO_OBJECT_ID='32 位 objectId' bash leave.sh
 ```
 
 ### 销假

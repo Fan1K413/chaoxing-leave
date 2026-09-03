@@ -80,9 +80,9 @@ SAVE_BODY=$(START_TIME="$START_TIME" END_TIME="$END_TIME" APPLY_DATE="$APPLY_DAT
     DURATION="$DURATION" FORM_ID="$FORM_ID" APRV_APP_ID="$APRV_APP_ID" \
     STATE="$STATE" FID_ENC="$FID_ENC" PAGE_ENC="$PAGE_ENC" UUID="$UUID" \
     BASE_URL="$BASE_URL" COOKIES="$COOKIES" \
-    UA="$UA" ACCEPT_JSON="$ACCEPT_JSON" SCRIPT_DIR="$SCRIPT_DIR" LEAVE_PHOTO_URL="$LEAVE_PHOTO_URL" \
+    UA="$UA" ACCEPT_JSON="$ACCEPT_JSON" SCRIPT_DIR="$SCRIPT_DIR" PHOTO_OBJECT_ID="$PHOTO_OBJECT_ID" \
     $PYTHON << 'PYEOF'
-import json, sys, time, urllib.parse, uuid as _uuid, subprocess, tempfile as _tmp, os, base64, zlib, hashlib, random
+import json, sys, time, urllib.parse, uuid as _uuid, subprocess, tempfile as _tmp, os, base64, zlib, hashlib, random, re
 from datetime import date, datetime, timedelta
 
 # ---- Config from env ----
@@ -101,7 +101,10 @@ cookies = os.environ['COOKIES']
 ua = os.environ['UA']
 accept_json = os.environ['ACCEPT_JSON']
 script_dir = os.environ.get('SCRIPT_DIR', '')
-leave_photo_url = os.environ.get('LEAVE_PHOTO_URL', '')
+leave_photo_object_id = os.environ.get('PHOTO_OBJECT_ID', '').strip().lower()
+if not re.fullmatch(r'[0-9a-f]{32}', leave_photo_object_id):
+    raise RuntimeError('PHOTO_OBJECT_ID 必须是超星上传接口返回的 32 位 objectId')
+leave_photo_url = f'https://p.cldisk.com/star4/{leave_photo_object_id}/origin.jpg'
 
 web_apply_url = (
     f'{base_url}/apps/forms/web/apply.html?formType=1&formType=1&edit=0&backurl='
@@ -352,33 +355,28 @@ if fid and fid in form_id_value:
 if '25' in form_id_value and signature_url:
     form_id_value['25']['groupValues'] = [{'values': [[{'val': signature_url}]], 'isShow': True}]
 
-# Fill file upload (field 26) - use photo URL from environment
+# Fill file upload (field 26) - build resource metadata from objectId
 if '26' in form_id_value:
-    if leave_photo_url:
-        file_name = leave_photo_url.split('?')[0].rstrip('/').split('/')[-1] or 'leave-photo.jpg'
-        suffix = file_name.rsplit('.', 1)[-1].lower() if '.' in file_name else 'jpg'
-        form_id_value['26']['groupValues'] = [{'values': [[{
-            'modifyDate': int(time.time() * 1000),
-            'name': file_name,
-            'objectId': '',
-            'size': '',
-            'thumbnail': leave_photo_url,
-            'suffix': suffix,
-            'preview': leave_photo_url,
-            'previewUrl': leave_photo_url,
-            'isfile': True,
-            'isImg': suffix in ('jpg', 'jpeg', 'png', 'gif', 'bmp'),
-            'isOffice': False,
-            'isMirror': False,
-            'filetype': '',
-            'filepath': '',
-            'sort': 0,
-            'topsort': 0,
-            'resTypeValue': 3,
-            'extinfo': ''
-        }]], 'isShow': True}]
-    else:
-        form_id_value['26']['groupValues'] = [{'values': [[]], 'isShow': True}]
+    form_id_value['26']['groupValues'] = [{'values': [[{
+        'modifyDate': int(time.time() * 1000),
+        'name': 'leave-photo.jpg',
+        'objectId': leave_photo_object_id,
+        'size': 0,
+        'thumbnail': leave_photo_url,
+        'suffix': 'jpg',
+        'preview': leave_photo_url,
+        'previewUrl': leave_photo_url,
+        'isfile': True,
+        'isImg': True,
+        'isOffice': False,
+        'isMirror': False,
+        'filetype': '',
+        'filepath': '',
+        'sort': 0,
+        'topsort': 0,
+        'resTypeValue': 3,
+        'extinfo': ''
+    }]], 'isShow': True}]
 
 # Fill user info fields from requesturl
 user_info_map = {

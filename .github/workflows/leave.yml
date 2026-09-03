@@ -19,5 +19,5 @@ jobs:
       - name: 执行请假提交
         env:
           CHAOXING_COOKIES: ${{ secrets.CHAOXING_COOKIES }}
-          LEAVE_PHOTO_URL: ${{ secrets.LEAVE_PHOTO_URL }}
+          PHOTO_OBJECT_ID: ${{ secrets.PHOTO_OBJECT_ID }}
         run: bash leave.sh

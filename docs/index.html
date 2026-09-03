@@ -245,7 +245,7 @@
         <ul class="list">
           <li>请假时间：周五 12:00 至周日 18:00</li>
           <li>申请日期：运行当周周四</li>
-          <li>面部拍照：通过 <code>LEAVE_PHOTO_URL</code> 注入</li>
+          <li>面部拍照：通过 <code>PHOTO_OBJECT_ID</code> 注入</li>
           <li>脚本：<code>leave.sh</code></li>
         </ul>
       </article>
@@ -292,8 +292,8 @@
             <td>学习通 / 超星 OA 登录 Cookie。</td>
           </tr>
           <tr>
-            <td><code>LEAVE_PHOTO_URL</code></td>
-            <td>请假面部拍照图片链接。不要把照片文件提交到公开仓库。</td>
+            <td><code>PHOTO_OBJECT_ID</code></td>
+            <td>请假面部照片上传后返回的 32 位 <code>objectId</code>。不要把照片或 ID 提交到公开仓库。</td>
           </tr>
           <tr>
             <td><code>CANCEL_LAT</code></td>
@@ -315,7 +315,7 @@
       <article class="card">
         <h2>本地运行：请假</h2>
         <pre><code>CHAOXING_COOKIES='你的 Cookie' \
-LEAVE_PHOTO_URL='https://example.com/photo.jpg' \
+PHOTO_OBJECT_ID='32 位 objectId' \
 bash leave.sh</code></pre>
       </article>
 
