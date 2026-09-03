@@ -91,6 +91,7 @@ SAVE_BODY=$(START_TIME="$START_TIME" END_TIME="$END_TIME" APPLY_DATE="$APPLY_DAT
     STATE="$STATE" FID_ENC="$FID_ENC" PAGE_ENC="$PAGE_ENC" UUID="$UUID" \
     BASE_URL="$BASE_URL" COOKIES="$COOKIES" \
     UA="$UA" ACCEPT_JSON="$ACCEPT_JSON" SCRIPT_DIR="$SCRIPT_DIR" PHOTO_OBJECT_ID="$PHOTO_OBJECT_ID" \
+    PHOTO_FILE_NAME="$PHOTO_FILE_NAME" \
     secrets_mode="$secrets_mode" \
     $PYTHON << 'PYEOF'
 import json, sys, time, urllib.parse, uuid as _uuid, subprocess, tempfile as _tmp, os, base64, zlib, hashlib, random, re
@@ -113,9 +114,12 @@ ua = os.environ['UA']
 accept_json = os.environ['ACCEPT_JSON']
 script_dir = os.environ.get('SCRIPT_DIR', '')
 leave_photo_object_id = os.environ.get('PHOTO_OBJECT_ID', '').strip().lower()
+photo_fallback_name = os.path.basename(os.environ.get('PHOTO_FILE_NAME', '').strip()) or 'photo.jpg'
 secrets_mode = os.environ.get('secrets_mode', '0') == '1'
 if not re.fullmatch(r'[0-9a-f]{32}', leave_photo_object_id):
     raise RuntimeError('PHOTO_OBJECT_ID 必须是超星上传接口返回的 32 位 objectId')
+if not os.path.splitext(photo_fallback_name)[1]:
+    photo_fallback_name += '.jpg'
 leave_photo_url = f'https://p.cldisk.com/star4/{leave_photo_object_id}/origin.jpg'
 
 web_apply_url = (
@@ -435,20 +439,22 @@ if not photo_metadata:
     else:
         metadata_errors.append(f'token/uservalid HTTP {code}')
 
-if not photo_metadata:
-    detail = '; '.join(metadata_errors)
+if photo_metadata:
+    photo_name = str(photo_metadata.get('name') or photo_fallback_name).strip()
+    photo_size = photo_metadata.get('size', photo_metadata.get('byteSize', 0))
     if secrets_mode:
-        raise RuntimeError('无法根据 PHOTO_OBJECT_ID 获取图片元数据，已停止提交。')
-    raise RuntimeError(f'无法根据 PHOTO_OBJECT_ID 获取图片元数据，已停止提交。{detail}')
-
-photo_name = str(photo_metadata.get('name') or '').strip()
-photo_size = photo_metadata.get('size', photo_metadata.get('byteSize'))
-if not photo_name or photo_size in (None, ''):
-    raise RuntimeError('图片详情缺少 name 或 size，已停止提交以避免附件信息错误')
-if secrets_mode:
-    sys.stderr.write('Photo metadata loaded.\n')
+        sys.stderr.write('Photo metadata loaded.\n')
+    else:
+        sys.stderr.write(f'Photo metadata loaded: name={photo_name}, size={photo_size}\n')
 else:
-    sys.stderr.write(f'Photo metadata loaded: name={photo_name}, size={photo_size}\n')
+    photo_metadata = {}
+    photo_name = photo_fallback_name
+    photo_size = 0
+    if secrets_mode:
+        sys.stderr.write('Photo metadata unavailable; using fallback values.\n')
+    else:
+        detail = '; '.join(metadata_errors)
+        sys.stderr.write(f'Photo metadata unavailable; using fallback name={photo_name}. {detail}\n')
 
 # ---- Step 6: Call approvers API ----
 sys.stderr.write('Calling approvers...\n')

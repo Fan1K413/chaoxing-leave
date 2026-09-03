@@ -59,6 +59,7 @@ Settings → Secrets and variables → Actions → New repository secret
 | --- | --- |
 | `CHAOXING_COOKIES` | 学习通 / 超星 OA 登录 Cookie |
 | `PHOTO_OBJECT_ID` | 请假面部照片上传后返回的 `objectId` |
+| `PHOTO_FILE_NAME` | 可选；云盘详情查询失败时使用的图片名称，默认 `photo.jpg` |
 | `CANCEL_LAT` | 销假定位纬度 |
 | `CANCEL_LNG` | 销假定位经度 |
 | `CANCEL_ADDRESS` | 销假定位地址 |
@@ -77,13 +78,15 @@ key1=value1; key2=value2; key3=value3
 
 ### `PHOTO_OBJECT_ID`
 
-先在超星中上传面部照片，再填写上传接口返回的 32 位 `objectId`。运行时脚本会根据该 ID 获取原始文件名、大小等完整附件信息，例如：
+先在超星中上传面部照片，再填写上传接口返回的 32 位 `objectId`。运行时脚本会尝试根据该 ID 获取原始文件名、大小等完整附件信息，例如：
 
 ```text
 0123456789abcdef0123456789abcdef
 ```
 
 脚本会根据 `objectId` 自动生成图片地址。不要把本人照片或 `objectId` 直接提交到公开仓库。
+
+如果云盘接口无法返回图片详情，脚本会继续使用兜底名称 `photo.jpg`。如需指定名称，可添加可选 Secret `PHOTO_FILE_NAME`，例如 `IMG_5323.jpg`。
 
 ### `secrets_mode`
 

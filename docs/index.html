@@ -293,7 +293,11 @@
           </tr>
           <tr>
             <td><code>PHOTO_OBJECT_ID</code></td>
-            <td>请假面部照片上传后返回的 32 位 <code>objectId</code>。脚本会据此获取原始文件名、大小等附件信息；不要把照片或 ID 提交到公开仓库。</td>
+            <td>请假面部照片上传后返回的 32 位 <code>objectId</code>。脚本会尝试获取原始附件信息，失败时使用 <code>PHOTO_FILE_NAME</code>（默认 <code>photo.jpg</code>）；不要把照片或 ID 提交到公开仓库。</td>
+          </tr>
+          <tr>
+            <td><code>PHOTO_FILE_NAME</code></td>
+            <td>可选；云盘详情查询失败时使用的图片名称，默认 <code>photo.jpg</code>。</td>
           </tr>
           <tr>
             <td><code>CANCEL_LAT</code></td>
@@ -309,7 +313,7 @@
           </tr>
         </tbody>
       </table>
-      <p class="muted">可选环境变量 <code>secrets_mode</code> 默认为 <code>0</code>；设为 <code>1</code> 后隐藏个人资料、签名链接、用户编码、时间明细、审批 ID 和原始接口响应。GitHub Actions 中通过同名仓库变量设置。</p>
+      <p class="muted">可选 Secret <code>PHOTO_FILE_NAME</code> 默认为 <code>photo.jpg</code>，用于云盘详情查询失败时的附件名称。可选环境变量 <code>secrets_mode</code> 默认为 <code>0</code>；设为 <code>1</code> 后隐藏个人资料、签名链接、用户编码、时间明细、审批 ID 和原始接口响应。GitHub Actions 中通过同名仓库变量设置。</p>
     </section>
 
     <section class="grid">

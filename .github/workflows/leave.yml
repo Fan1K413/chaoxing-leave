@@ -20,5 +20,6 @@ jobs:
         env:
           CHAOXING_COOKIES: ${{ secrets.CHAOXING_COOKIES }}
           PHOTO_OBJECT_ID: ${{ secrets.PHOTO_OBJECT_ID }}
+          PHOTO_FILE_NAME: ${{ secrets.PHOTO_FILE_NAME || 'photo.jpg' }}
           secrets_mode: ${{ vars.secrets_mode || '0' }}
         run: bash leave.sh
