@@ -18,6 +18,16 @@ if [ -z "$PYTHON" ]; then
 fi
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"; }
+secrets_mode="${secrets_mode:-0}"
+if [ "$secrets_mode" != "0" ] && [ "$secrets_mode" != "1" ]; then
+    echo "ERROR: secrets_mode 只能设置为 0 或 1" >&2
+    exit 1
+fi
+sensitive_log() {
+    if [ "$secrets_mode" != "1" ]; then
+        log "$1"
+    fi
+}
 
 # =============================================
 # Config
@@ -43,7 +53,7 @@ fi
 
 UUID=$($PYTHON -c "import uuid; print(uuid.uuid4().hex)")
 log "========== 开始执行请假提交 =========="
-log "UUID: $UUID"
+sensitive_log "UUID: $UUID"
 
 # =============================================
 # 1. Calculate dates
@@ -66,10 +76,10 @@ print(f'{start}|{end}|{apply}|{duration}')
 
 IFS='|' read START_TIME END_TIME APPLY_DATE DURATION <<< "$CALC"
 
-log "请假开始: $START_TIME"
-log "请假结束: $END_TIME"
-log "申请日期: $APPLY_DATE"
-log "请假时长: $DURATION 天"
+sensitive_log "请假开始: $START_TIME"
+sensitive_log "请假结束: $END_TIME"
+sensitive_log "申请日期: $APPLY_DATE"
+sensitive_log "请假时长: $DURATION 天"
 
 # =============================================
 # 2. Python: all API calls + build save body
@@ -81,6 +91,7 @@ SAVE_BODY=$(START_TIME="$START_TIME" END_TIME="$END_TIME" APPLY_DATE="$APPLY_DAT
     STATE="$STATE" FID_ENC="$FID_ENC" PAGE_ENC="$PAGE_ENC" UUID="$UUID" \
     BASE_URL="$BASE_URL" COOKIES="$COOKIES" \
     UA="$UA" ACCEPT_JSON="$ACCEPT_JSON" SCRIPT_DIR="$SCRIPT_DIR" PHOTO_OBJECT_ID="$PHOTO_OBJECT_ID" \
+    secrets_mode="$secrets_mode" \
     $PYTHON << 'PYEOF'
 import json, sys, time, urllib.parse, uuid as _uuid, subprocess, tempfile as _tmp, os, base64, zlib, hashlib, random, re
 from datetime import date, datetime, timedelta
@@ -102,6 +113,7 @@ ua = os.environ['UA']
 accept_json = os.environ['ACCEPT_JSON']
 script_dir = os.environ.get('SCRIPT_DIR', '')
 leave_photo_object_id = os.environ.get('PHOTO_OBJECT_ID', '').strip().lower()
+secrets_mode = os.environ.get('secrets_mode', '0') == '1'
 if not re.fullmatch(r'[0-9a-f]{32}', leave_photo_object_id):
     raise RuntimeError('PHOTO_OBJECT_ID 必须是超星上传接口返回的 32 位 objectId')
 leave_photo_url = f'https://p.cldisk.com/star4/{leave_photo_object_id}/origin.jpg'
@@ -176,9 +188,15 @@ if ui_data.get('success'):
     decrypted = unpad(cipher.decrypt(base64.b64decode(ui_data['data'])), AES.block_size)
     cookie_info = json.loads(decrypted)
     oa_uid_enc = cookie_info.get('oaCookieUserInfo', {}).get('oaUidEnc', '')
-    sys.stderr.write(f'oaUidEnc={oa_uid_enc[:30]}...\n')
+    if secrets_mode:
+        sys.stderr.write('oaUidEnc loaded.\n')
+    else:
+        sys.stderr.write(f'oaUidEnc={oa_uid_enc[:30]}...\n')
 else:
-    sys.stderr.write(f'cookie/userinfo failed: {body[:200]}\n')
+    if secrets_mode:
+        sys.stderr.write('cookie/userinfo failed. Response hidden.\n')
+    else:
+        sys.stderr.write(f'cookie/userinfo failed: {body[:200]}\n')
 
 # ---- Step 1: Load web apply page ----
 sys.stderr.write('Loading apply page...\n')
@@ -214,7 +232,10 @@ if isinstance(sign_raw, str):
 else:
     sign_info = sign_raw
 signature_url = sign_info.get('signature', '')
-sys.stderr.write(f'Signature URL: {signature_url[:60]}...\n')
+if secrets_mode:
+    sys.stderr.write('Signature loaded.\n')
+else:
+    sys.stderr.write(f'Signature URL: {signature_url[:60]}...\n')
 
 # ---- Step 4: Get user info from requesturl ----
 sys.stderr.write('Getting user info...\n')
@@ -234,9 +255,15 @@ if requesturl_data.get('success'):
         cid = str(item.get('cid', ''))
         val = item.get('val', '')
         user_info[cid] = val
-    sys.stderr.write(f'User info: xh={user_info.get("2","")}, yx={user_info.get("4","")}, bj={user_info.get("6","")}\n')
+    if secrets_mode:
+        sys.stderr.write('User info loaded.\n')
+    else:
+        sys.stderr.write(f'User info: xh={user_info.get("2","")}, yx={user_info.get("4","")}, bj={user_info.get("6","")}\n')
 else:
-    sys.stderr.write(f'requesturl failed: {body[:200]}\n')
+    if secrets_mode:
+        sys.stderr.write('requesturl failed. Response hidden.\n')
+    else:
+        sys.stderr.write(f'requesturl failed: {body[:200]}\n')
 
 # ---- Step 5: Build formUserData for approvers call ----
 sys.stderr.write('Building formUserData...\n')
@@ -489,7 +516,11 @@ SAVE_CODE=$(echo "$SAVE_RESP" | tail -1)
 SAVE_BODY_RESP=$(echo "$SAVE_RESP" | head -c 2000)
 
 log "提交 HTTP $SAVE_CODE"
-log "响应: $SAVE_BODY_RESP"
+if [ "$secrets_mode" = "1" ]; then
+  log "响应详情已隐藏 (secrets_mode=1)"
+else
+  log "响应: $SAVE_BODY_RESP"
+fi
 
 # =============================================
 # 4. Check result
@@ -497,15 +528,21 @@ log "响应: $SAVE_BODY_RESP"
 if echo "$SAVE_BODY_RESP" | grep -qE '"success":true'; then
   log "✅ 请假提交成功！"
   # Extract aprvId if present
-  APRVID=$(echo "$SAVE_BODY_RESP" | grep -oE '"aprvId":[0-9]+' | head -1 | cut -d: -f2)
-  [ -n "$APRVID" ] && log "审批ID: $APRVID"
+  if [ "$secrets_mode" != "1" ]; then
+    APRVID=$(echo "$SAVE_BODY_RESP" | grep -oE '"aprvId":[0-9]+' | head -1 | cut -d: -f2)
+    [ -n "$APRVID" ] && log "审批ID: $APRVID"
+  fi
 elif echo "$SAVE_BODY_RESP" | grep -qE '"success":false'; then
   log "❌ 请假提交失败，请检查日志"
-  log "完整响应: $(echo "$SAVE_RESP" | head -c 5000)"
+  if [ "$secrets_mode" != "1" ]; then
+    log "完整响应: $(echo "$SAVE_RESP" | head -c 5000)"
+  fi
   exit 1
 else
   log "⚠️  无法判断结果 (HTTP $SAVE_CODE)"
-  log "完整响应: $(echo "$SAVE_RESP" | head -c 5000)"
+  if [ "$secrets_mode" != "1" ]; then
+    log "完整响应: $(echo "$SAVE_RESP" | head -c 5000)"
+  fi
   exit 2
 fi
 

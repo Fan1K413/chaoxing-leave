@@ -85,6 +85,12 @@ key1=value1; key2=value2; key3=value3
 
 脚本会根据 `objectId` 自动生成图片地址。不要把本人照片或 `objectId` 直接提交到公开仓库。
 
+### `secrets_mode`
+
+可选的日志隐私环境变量，默认值为 `0`。设置为 `1` 后，请假和销假日志将隐藏个人资料、签名链接、用户编码、时间明细、审批 ID 和原始接口响应，只保留运行进度与成功或失败状态。
+
+GitHub Actions 中可在 Settings → Secrets and variables → Actions → Variables 新建仓库变量 `secrets_mode`，值设为 `1`。本地运行时在命令前添加 `secrets_mode=1`。
+
 ### 销假定位
 
 `CANCEL_LAT`、`CANCEL_LNG` 填数字字符串，`CANCEL_ADDRESS` 填地址文本。

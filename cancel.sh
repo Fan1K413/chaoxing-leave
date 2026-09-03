@@ -18,6 +18,16 @@ if [ -z "$PYTHON" ]; then
 fi
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"; }
+secrets_mode="${secrets_mode:-0}"
+if [ "$secrets_mode" != "0" ] && [ "$secrets_mode" != "1" ]; then
+    echo "ERROR: secrets_mode 只能设置为 0 或 1" >&2
+    exit 1
+fi
+sensitive_log() {
+    if [ "$secrets_mode" != "1" ]; then
+        log "$1"
+    fi
+}
 
 # =============================================
 # Config
@@ -52,8 +62,8 @@ UUID=$($PYTHON -c "import uuid; print(uuid.uuid4().hex)")
 CANCEL_TIME=$($PYTHON -c "from datetime import datetime, timedelta, timezone; print(datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M'))")
 
 log "========== 开始执行销假提交 =========="
-log "UUID: $UUID"
-log "销假时间: $CANCEL_TIME"
+sensitive_log "UUID: $UUID"
+sensitive_log "销假时间: $CANCEL_TIME"
 
 # =============================================
 # Python: all API calls + build save body
@@ -65,12 +75,14 @@ SAVE_BODY=$(CANCEL_TIME="$CANCEL_TIME" FORM_ID="$FORM_ID" APRV_APP_ID="$APRV_APP
     BASE_URL="$BASE_URL" COOKIES="$COOKIES" CX_UID="$CX_UID" \
     UA="$UA" ACCEPT_JSON="$ACCEPT_JSON" SCRIPT_DIR="$SCRIPT_DIR" \
     CANCEL_LAT="$CANCEL_LAT" CANCEL_LNG="$CANCEL_LNG" CANCEL_ADDRESS="$CANCEL_ADDRESS" \
+    secrets_mode="$secrets_mode" \
     $PYTHON << 'PYEOF'
 import base64, json, os, subprocess, sys, tempfile as _tmp, urllib.parse, zlib
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 
 cancel_time = os.environ['CANCEL_TIME']
+secrets_mode = os.environ.get('secrets_mode', '0') == '1'
 form_id = os.environ['FORM_ID']
 aprv_app_id = os.environ['APRV_APP_ID']
 state = os.environ['STATE']
@@ -214,12 +226,17 @@ sys.stderr.write('Getting oaUidEnc...\n')
 code, body = curl_get(f'{base_url}/data/common/cookie/userinfo', base_url + '/')
 ui_data = json.loads(body)
 if not ui_data.get('success'):
+    if secrets_mode:
+        raise RuntimeError('cookie/userinfo failed. Response hidden.')
     raise RuntimeError(f'cookie/userinfo failed: {body[:200]}')
 cookie_info = decode_cookie_userinfo(ui_data['data'])
 oa_cookie = cookie_info.get('oaCookieUserInfo', {})
 oa_uid_enc = oa_cookie.get('oaUidEnc', '')
 uname = get_cookie('oa_name') or oa_cookie.get('oaName') or oa_cookie.get('name') or '姓名'
-sys.stderr.write(f'oaUidEnc={oa_uid_enc[:30]}...\n')
+if secrets_mode:
+    sys.stderr.write('oaUidEnc loaded.\n')
+else:
+    sys.stderr.write(f'oaUidEnc={oa_uid_enc[:30]}...\n')
 
 # ---- Step 1: Load apply page + verify/info ----
 sys.stderr.write('Loading cancel apply page...\n')
@@ -245,6 +262,8 @@ sys.stderr.write('Getting user info...\n')
 code, body = curl_post(f'{base_url}/front/open/share/apps/forms/fore/events/requesturl', REQUESTURL_BODY, web_apply_url)
 requesturl_data = json.loads(body)
 if not requesturl_data.get('success'):
+    if secrets_mode:
+        raise RuntimeError('requesturl failed. Response hidden.')
     raise RuntimeError(f'requesturl failed: {body[:200]}')
 user_info = {}
 for item in requesturl_data.get('data', []):
@@ -293,6 +312,8 @@ def call_link_field(current_field_id, link_value_field_id, link_value_field_comp
     code, resp = curl_post(f'{base_url}/data/apps/forms/fore/forms/user/link/field/data', body, web_apply_url)
     data = json.loads(resp)
     if not data.get('success') or not data.get('data', {}).get('detailVal'):
+        if secrets_mode:
+            raise RuntimeError('link field failed. Response hidden.')
         raise RuntimeError(f'link field failed: {resp[:200]}')
     vals = aes_ecb_decrypt_json(data['data']['detailVal'])
     if not vals:
@@ -355,6 +376,8 @@ apprv_body = (
 code, body = curl_post(f'{base_url}/data/approve/apps/forms/fore/list/approvers', apprv_body, web_apply_url)
 apprv_resp = json.loads(body)
 if not apprv_resp.get('success'):
+    if secrets_mode:
+        raise RuntimeError('approvers failed. Response hidden.')
     raise RuntimeError(f'approvers failed: {body[:200]}')
 apprv_data = apprv_resp.get('data', {})
 sys.stderr.write('Approvers loaded.\n')
@@ -461,19 +484,29 @@ SAVE_CODE=$(echo "$SAVE_RESP" | tail -1)
 SAVE_BODY_RESP=$(echo "$SAVE_RESP" | head -c 2000)
 
 log "提交 HTTP $SAVE_CODE"
-log "响应: $SAVE_BODY_RESP"
+if [ "$secrets_mode" = "1" ]; then
+  log "响应详情已隐藏 (secrets_mode=1)"
+else
+  log "响应: $SAVE_BODY_RESP"
+fi
 
 if echo "$SAVE_BODY_RESP" | grep -qE '"success":true'; then
   log "✅ 销假提交成功！"
-  APRVID=$(echo "$SAVE_BODY_RESP" | grep -oE '"aprvId":[0-9]+' | head -1 | cut -d: -f2)
-  [ -n "$APRVID" ] && log "审批ID: $APRVID"
+  if [ "$secrets_mode" != "1" ]; then
+    APRVID=$(echo "$SAVE_BODY_RESP" | grep -oE '"aprvId":[0-9]+' | head -1 | cut -d: -f2)
+    [ -n "$APRVID" ] && log "审批ID: $APRVID"
+  fi
 elif echo "$SAVE_BODY_RESP" | grep -qE '"success":false'; then
   log "❌ 销假提交失败，请检查日志"
-  log "完整响应: $(echo "$SAVE_RESP" | head -c 5000)"
+  if [ "$secrets_mode" != "1" ]; then
+    log "完整响应: $(echo "$SAVE_RESP" | head -c 5000)"
+  fi
   exit 1
 else
   log "⚠️  无法判断结果 (HTTP $SAVE_CODE)"
-  log "完整响应: $(echo "$SAVE_RESP" | head -c 5000)"
+  if [ "$secrets_mode" != "1" ]; then
+    log "完整响应: $(echo "$SAVE_RESP" | head -c 5000)"
+  fi
   exit 2
 fi
 
