@@ -134,14 +134,75 @@ def get_cookie(name):
             return urllib.parse.unquote(v.strip())
     return ''
 
-def resolve_uid_uname():
-    uid_raw = os.environ.get('CX_UID') or get_cookie('oa_uid') or get_cookie('_uid') or get_cookie('UID')
-    uname = os.environ.get('CX_NAME') or get_cookie('oa_name') or get_cookie('uname') or '姓名'
+def find_contact_identity(enc_data):
+    """Read the current user from the form's xm/contact component when present."""
+    def walk(value):
+        if isinstance(value, dict):
+            uid_value = value.get('puid') or value.get('uid')
+            name_value = value.get('uname') or value.get('userName')
+            if uid_value and name_value:
+                return {'puid': uid_value, 'uname': name_value}
+            for child in value.values():
+                found = walk(child)
+                if found:
+                    return found
+        elif isinstance(value, list):
+            for child in value:
+                found = walk(child)
+                if found:
+                    return found
+        return {}
+
+    for item in enc_data:
+        if item.get('alias') == 'xm':
+            return walk(item)
+    return {}
+
+def resolve_uid_uname(oa_cookie, form_contact):
+    uid_raw = (
+        os.environ.get('CX_UID')
+        or get_cookie('oa_uid')
+        or get_cookie('_uid')
+        or get_cookie('UID')
+        or oa_cookie.get('oaUid')
+        or oa_cookie.get('puid')
+        or oa_cookie.get('uid')
+        or form_contact.get('puid')
+    )
+    uname = (
+        os.environ.get('CX_NAME')
+        or get_cookie('oa_name')
+        or get_cookie('uname')
+        or oa_cookie.get('oaName')
+        or oa_cookie.get('name')
+        or oa_cookie.get('uname')
+        or form_contact.get('uname')
+    )
     try:
         uid_val = int(uid_raw)
     except Exception:
-        raise RuntimeError('缺少用户 UID：请设置 CX_UID，或确保 Cookie 中包含 oa_uid/_uid/UID')
+        raise RuntimeError('无法从 Cookie 或 cookie/userinfo 响应中获取用户 UID')
+    if not str(uname or '').strip() or str(uname).strip() == '姓名':
+        raise RuntimeError('无法从 cookie/userinfo 响应中获取真实姓名，已停止提交以避免姓名显示为“姓名”')
+    uname = str(uname).strip()
     return uid_val, uname
+
+def find_photo_metadata(value, object_id):
+    """Recursively find a cloud-file object matching objectId in an API response."""
+    if isinstance(value, dict):
+        candidate_id = value.get('objectId') or value.get('objectid')
+        if str(candidate_id or '').lower() == object_id and value.get('name'):
+            return value
+        for child in value.values():
+            found = find_photo_metadata(child, object_id)
+            if found:
+                return found
+    elif isinstance(value, list):
+        for child in value:
+            found = find_photo_metadata(child, object_id)
+            if found:
+                return found
+    return None
 
 def curl_get(url, referer=None):
     cmd = ['curl', '-s', '--compressed', '-w', '\n%{http_code}', '-X', 'GET', url,
@@ -180,6 +241,7 @@ sys.stderr.write('Getting oaUidEnc...\n')
 code, body = curl_get(f'{base_url}/data/common/cookie/userinfo', base_url + '/')
 ui_data = json.loads(body)
 oa_uid_enc = ''
+oa_cookie = {}
 if ui_data.get('success'):
     key = base64.b64decode('anZHRFg2ekNaVmliZmExTA==')
     from Crypto.Cipher import AES
@@ -187,7 +249,8 @@ if ui_data.get('success'):
     cipher = AES.new(key, AES.MODE_ECB)
     decrypted = unpad(cipher.decrypt(base64.b64decode(ui_data['data'])), AES.block_size)
     cookie_info = json.loads(decrypted)
-    oa_uid_enc = cookie_info.get('oaCookieUserInfo', {}).get('oaUidEnc', '')
+    oa_cookie = cookie_info.get('oaCookieUserInfo', {})
+    oa_uid_enc = oa_cookie.get('oaUidEnc', '')
     if secrets_mode:
         sys.stderr.write('oaUidEnc loaded.\n')
     else:
@@ -221,6 +284,7 @@ sys.stderr.write(f'version={version}, updatetime={updatetime}\n')
 alias_to_id = {}
 for item in enc_data:
     alias_to_id[item.get('alias', '')] = str(item['id'])
+form_contact = find_contact_identity(enc_data)
 
 # ---- Step 3: Get signature ----
 sys.stderr.write('Getting signature...\n')
@@ -299,9 +363,92 @@ for item in form_user_data:
 
 fud_json = json.dumps(form_user_data, ensure_ascii=False, separators=(',', ':'))
 fud_enc = urllib.parse.quote_plus(fud_json, safe='')
-uid, uname = resolve_uid_uname()
+uid, uname = resolve_uid_uname(oa_cookie, form_contact)
 compt_json = json.dumps({'contact1': {'name': '姓名', 'value': uid}}, ensure_ascii=False, separators=(',', ':'))
 compt_enc = urllib.parse.quote_plus(compt_json, safe='')
+
+# ---- Step 5.1: Resolve the complete cloud-file metadata from objectId ----
+sys.stderr.write('Getting photo metadata...\n')
+photo_metadata = None
+metadata_errors = []
+
+details_query = urllib.parse.urlencode({
+    'puid': uid,
+    'objectid': leave_photo_object_id,
+})
+code, body = curl_get(
+    f'https://pan-yz.chaoxing.com/api/objectid2DownloadUrl?{details_query}',
+    'https://pan-yz.chaoxing.com/'
+)
+try:
+    details_resp = json.loads(body)
+    photo_metadata = find_photo_metadata(details_resp, leave_photo_object_id)
+    if not photo_metadata:
+        metadata_errors.append(f'objectid2DownloadUrl HTTP {code}')
+except Exception:
+    metadata_errors.append(f'objectid2DownloadUrl HTTP {code}: invalid JSON')
+
+# Some accounts return only a download URL above. Fall back to the root cloud-file
+# listing, which contains the same metadata object returned by the upload API.
+if not photo_metadata:
+    code, body = curl_get(
+        'https://pan-yz.chaoxing.com/api/token/uservalid',
+        'https://pan-yz.chaoxing.com/'
+    )
+    try:
+        token_resp = json.loads(body)
+        pan_token = (
+            token_resp.get('_token')
+            or token_resp.get('token')
+            or token_resp.get('data', {}).get('_token')
+            or token_resp.get('data', {}).get('token')
+        )
+    except Exception:
+        pan_token = ''
+
+    if pan_token:
+        for page in range(1, 11):
+            list_query = urllib.parse.urlencode({
+                'puid': uid,
+                'fldid': '',
+                'page': page,
+                'size': 100,
+                'addrec': 0,
+                'showCollect': 1,
+                '_token': pan_token,
+            })
+            code, body = curl_get(
+                f'https://pan-yz.chaoxing.com/api/getMyDirAndFiles?{list_query}',
+                'https://pan-yz.chaoxing.com/'
+            )
+            try:
+                list_resp = json.loads(body)
+            except Exception:
+                metadata_errors.append(f'getMyDirAndFiles page {page} HTTP {code}: invalid JSON')
+                break
+            photo_metadata = find_photo_metadata(list_resp, leave_photo_object_id)
+            if photo_metadata:
+                break
+            page_items = list_resp.get('data', []) if isinstance(list_resp, dict) else []
+            if not page_items:
+                break
+    else:
+        metadata_errors.append(f'token/uservalid HTTP {code}')
+
+if not photo_metadata:
+    detail = '; '.join(metadata_errors)
+    if secrets_mode:
+        raise RuntimeError('无法根据 PHOTO_OBJECT_ID 获取图片元数据，已停止提交。')
+    raise RuntimeError(f'无法根据 PHOTO_OBJECT_ID 获取图片元数据，已停止提交。{detail}')
+
+photo_name = str(photo_metadata.get('name') or '').strip()
+photo_size = photo_metadata.get('size', photo_metadata.get('byteSize'))
+if not photo_name or photo_size in (None, ''):
+    raise RuntimeError('图片详情缺少 name 或 size，已停止提交以避免附件信息错误')
+if secrets_mode:
+    sys.stderr.write('Photo metadata loaded.\n')
+else:
+    sys.stderr.write(f'Photo metadata loaded: name={photo_name}, size={photo_size}\n')
 
 # ---- Step 6: Call approvers API ----
 sys.stderr.write('Calling approvers...\n')
@@ -382,28 +529,42 @@ if fid and fid in form_id_value:
 if '25' in form_id_value and signature_url:
     form_id_value['25']['groupValues'] = [{'values': [[{'val': signature_url}]], 'isShow': True}]
 
-# Fill file upload (field 26) - build resource metadata from objectId
+# Fill file upload (field 26) with the metadata returned by Chaoxing Pan.
 if '26' in form_id_value:
-    form_id_value['26']['groupValues'] = [{'values': [[{
-        'modifyDate': int(time.time() * 1000),
-        'name': 'leave-photo.jpg',
+    photo_suffix = str(photo_metadata.get('suffix') or os.path.splitext(photo_name)[1].lstrip('.') or 'jpg')
+    photo_resource = {
+        'modifyDate': photo_metadata.get('modifyDate', photo_metadata.get('uploadDate', int(time.time() * 1000))),
+        'name': photo_name,
         'objectId': leave_photo_object_id,
-        'size': 0,
-        'thumbnail': leave_photo_url,
-        'suffix': 'jpg',
-        'preview': leave_photo_url,
-        'previewUrl': leave_photo_url,
-        'isfile': True,
-        'isImg': True,
-        'isOffice': False,
-        'isMirror': False,
-        'filetype': '',
-        'filepath': '',
-        'sort': 0,
-        'topsort': 0,
-        'resTypeValue': 3,
-        'extinfo': ''
-    }]], 'isShow': True}]
+        'size': str(photo_size),
+        'thumbnail': photo_metadata.get('thumbnail') or leave_photo_url,
+        'suffix': photo_suffix,
+        'resid': str(photo_metadata.get('resid', '')),
+        'encryptedId': photo_metadata.get('encryptedId', ''),
+        'crc': photo_metadata.get('crc', ''),
+        'puid': photo_metadata.get('puid', uid),
+        'isfile': photo_metadata.get('isfile', True),
+        'pantype': photo_metadata.get('pantype', 'USER_PAN'),
+        'restype': photo_metadata.get('restype', 'RES_TYPE_NORMAL'),
+        'uploadDate': photo_metadata.get('uploadDate', photo_metadata.get('modifyDate', int(time.time() * 1000))),
+        'uploadDateFormat': photo_metadata.get('uploadDateFormat', ''),
+        'residstr': str(photo_metadata.get('residstr', photo_metadata.get('resid', ''))),
+        'preview': photo_metadata.get('preview', ''),
+        'creator': photo_metadata.get('creator', uid),
+        'duration': photo_metadata.get('duration', 0),
+        'isImg': photo_metadata.get('isImg', True),
+        'isOffice': photo_metadata.get('isOffice', False),
+        'isMirror': photo_metadata.get('isMirror', False),
+        'previewUrl': photo_metadata.get('previewUrl') or leave_photo_url,
+        'filetype': photo_metadata.get('filetype', ''),
+        'filepath': photo_metadata.get('filepath', ''),
+        'sort': photo_metadata.get('sort', 0),
+        'topsort': photo_metadata.get('topsort', 0),
+        'resTypeValue': photo_metadata.get('resTypeValue', 3),
+        'extinfo': photo_metadata.get('extinfo', ''),
+        'byteSize': photo_metadata.get('byteSize', photo_size),
+    }
+    form_id_value['26']['groupValues'] = [{'values': [[photo_resource]], 'isShow': True}]
 
 # Fill user info fields from requesturl
 user_info_map = {

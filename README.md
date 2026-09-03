@@ -77,7 +77,7 @@ key1=value1; key2=value2; key3=value3
 
 ### `PHOTO_OBJECT_ID`
 
-先在超星中上传面部照片，再填写上传接口返回的 32 位 `objectId`，例如：
+先在超星中上传面部照片，再填写上传接口返回的 32 位 `objectId`。运行时脚本会根据该 ID 获取原始文件名、大小等完整附件信息，例如：
 
 ```text
 0123456789abcdef0123456789abcdef
