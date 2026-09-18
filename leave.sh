@@ -680,7 +680,8 @@ SAVE_RESP=$(curl -s --compressed -w "\n%{http_code}" -X POST \
 rm -f "$SAVE_TMP"
 
 SAVE_CODE=$(echo "$SAVE_RESP" | tail -1)
-SAVE_BODY_RESP=$(echo "$SAVE_RESP" | head -c 2000)
+SAVE_BODY_FULL=$(echo "$SAVE_RESP" | sed '$d')
+SAVE_BODY_RESP=$(echo "$SAVE_BODY_FULL" | head -c 2000)
 
 log "提交 HTTP $SAVE_CODE"
 if [ "$secrets_mode" = "1" ]; then
@@ -692,23 +693,30 @@ fi
 # =============================================
 # 4. Check result
 # =============================================
-if echo "$SAVE_BODY_RESP" | grep -qE '"success":true'; then
+if echo "$SAVE_BODY_FULL" | grep -qE '"success"[[:space:]]*:[[:space:]]*true'; then
   log "✅ 请假提交成功！"
   # Extract aprvId if present
   if [ "$secrets_mode" != "1" ]; then
     APRVID=$(echo "$SAVE_BODY_RESP" | grep -oE '"aprvId":[0-9]+' | head -1 | cut -d: -f2)
     [ -n "$APRVID" ] && log "审批ID: $APRVID"
   fi
-elif echo "$SAVE_BODY_RESP" | grep -qE '"success":false'; then
-  log "❌ 请假提交失败，请检查日志"
-  if [ "$secrets_mode" != "1" ]; then
-    log "完整响应: $(echo "$SAVE_RESP" | head -c 5000)"
+elif echo "$SAVE_BODY_FULL" | grep -qE '"success"[[:space:]]*:[[:space:]]*false'; then
+  if echo "$SAVE_BODY_FULL" | grep -qiE '重复|已提交|已存在|already[[:space:]]+submitted|duplicate'; then
+    log "ℹ️ 检测到重复/已提交记录，本次视为成功"
+  else
+    log "❌ 请假提交失败，请检查日志"
+    if [ "$secrets_mode" != "1" ]; then
+      log "完整响应: $(echo "$SAVE_RESP" | head -c 5000)"
+    fi
+    exit 1
   fi
-  exit 1
+  if [ "$secrets_mode" != "1" ]; then
+    log "完整响应: $(echo "$SAVE_BODY_FULL" | head -c 5000)"
+  fi
 else
   log "⚠️  无法判断结果 (HTTP $SAVE_CODE)"
   if [ "$secrets_mode" != "1" ]; then
-    log "完整响应: $(echo "$SAVE_RESP" | head -c 5000)"
+    log "完整响应: $(echo "$SAVE_BODY_FULL" | head -c 5000)"
   fi
   exit 2
 fi
